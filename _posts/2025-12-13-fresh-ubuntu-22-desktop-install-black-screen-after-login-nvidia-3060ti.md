@@ -2,6 +2,9 @@
 layout: post
 title: "Fresh Ubuntu 22 Desktop Install: Black Screen After Login (Nvidia 3060ti)"
 date: 2025-12-13
+redirect_from:
+  - "/blog/posts/fresh-ubuntu-22-desktop-install-black-screen-after-login-nvidia-3060ti.html"
+  - "/blog/posts/2025-12-13 -- Fresh Ubuntu 22 Desktop Install - Black Screen After Login - Nvidia 3060ti.html"
 ---
 
 ## Describe the issue

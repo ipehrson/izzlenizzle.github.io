@@ -2,6 +2,9 @@
 layout: post
 title: "Git Rid of Code For Real"
 date: 2025-12-13
+redirect_from:
+  - "/blog/posts/git-rid-of-code-for-real.html"
+  - "/blog/posts/2025-12-13 -- Git Rid of Code For Real.html"
 ---
 
 ## Describe the issue

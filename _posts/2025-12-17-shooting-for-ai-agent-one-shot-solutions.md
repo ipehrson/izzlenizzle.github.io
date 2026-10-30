@@ -2,6 +2,9 @@
 layout: post
 title: 'Shooting for AI Agent "One-Shot" Solutions'
 date: 2025-12-17
+redirect_from:
+  - "/blog/posts/shooting-for-ai-agent-one-shot-solutions.html"
+  - "/blog/posts/2025-12-17 -- Shooting for AI Agent \"one-shot\" Solutions.html"
 ---
 
 AI is no stranger to the spotlight in the last few years. But how have the tools been working for you? 

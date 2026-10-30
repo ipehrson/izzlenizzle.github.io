@@ -2,6 +2,9 @@
 layout: post
 title: "Ubuntu 22 Clipboard Manager"
 date: 2025-12-13
+redirect_from:
+  - "/blog/posts/ubuntu-22-clipboard-manager.html"
+  - "/blog/posts/2025-12-13 -- Ubuntu 22 Clipboard Manager.html"
 ---
 
 ## Describe the issue

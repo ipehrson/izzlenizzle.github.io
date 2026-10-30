@@ -2,6 +2,9 @@
 layout: post
 title: "Screenshot Selection to Clipboard: Ubuntu 22"
 date: 2025-12-13
+redirect_from:
+  - "/blog/posts/screenshot-selection-to-clipboard-ubuntu-22.html"
+  - "/blog/posts/2025-12-13 -- Screenshot Selection to Clipboard - Ubuntu 22.html"
 ---
 
 ## Describe the issue

@@ -2,6 +2,9 @@
 layout: post
 title: "Fresh Ubuntu Linux Server Install: Dev Environment Preferences"
 date: 2025-12-31
+redirect_from:
+  - "/blog/posts/fresh-ubuntu-linux-server-install-dev-environment-preferences.html"
+  - "/blog/posts/2025-12-31 -- Fresh Ubuntu Linux Server Install - Dev Environment Preferences.html"
 ---
 
 Currently I'm using Ubuntu 24 LTS.

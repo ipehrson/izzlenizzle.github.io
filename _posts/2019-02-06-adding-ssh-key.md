@@ -2,6 +2,9 @@
 layout: post
 title: "Adding SSH Key"
 date: 2019-02-06
+redirect_from:
+  - "/blog/posts/adding-ssh-key.html"
+  - "/blog/posts/2019-02-06 -- Adding SSH Key.html"
 ---
 
 ## Adding SSH Key

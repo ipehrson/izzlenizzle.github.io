@@ -2,6 +2,9 @@
 layout: post
 title: "Local Gitea Instance"
 date: 2025-12-26
+redirect_from:
+  - "/blog/posts/local-gitea-instance.html"
+  - "/blog/posts/2025-12-26 -- Local Gitea Instance.html"
 ---
 
 Hope you had a great holiday season this year. I'm back at home and ready to get back into coding. I've setup a local Gitea instance on my development machine so that my future git work happens faster and backed it all up with Github. 

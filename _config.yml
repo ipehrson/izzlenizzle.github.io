@@ -7,6 +7,10 @@ permalink: /blog/posts/:slug/
 
 markdown: kramdown
 
+plugins:
+  - jekyll-redirect-from
+  - jekyll-sitemap
+
 exclude:
   - node_modules
   - vendor
