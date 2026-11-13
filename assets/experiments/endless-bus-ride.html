@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endless bus ride</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: #f7f6f2; color: #383c37; font: 14px ui-monospace, SFMono-Regular, Consolas, monospace; }
+  main { width: min(960px, 100%); padding: 28px; }
+  header, footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+  h1 { font-size: 15px; font-weight: 500; margin: 0; }
+  .label { font-size: 11px; color: #81857b; letter-spacing: 2px; }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; margin: 36px 0 26px; }
+  footer { flex-wrap: wrap; color: #81857b; font-size: 12px; }
+  .controls { display: flex; align-items: center; gap: 14px; }
+  button { font: inherit; color: #383c37; border: 1px solid #c7c9bf; border-radius: 4px; padding: 9px 14px; background: transparent; cursor: pointer; min-width: 82px; }
+  button:hover { background: #eaece3; }
+  input { width: 90px; accent-color: #545e4b; }
+  label { display: flex; align-items: center; gap: 10px; }
+  @media (max-width: 500px) { main { padding: 20px; } .label { letter-spacing: 1px; } }
+</style>
+<main>
+  <header><h1>Endless bus ride</h1><span class="label">NOWHERE TO BE.</span></header>
+  <canvas width="720" height="280" role="img" aria-label="A pixel-art passenger bus driving along an endless road, with occasional speed bumps, roadside benches and hawkers offering bananas and goods during short stops, where a passenger pays for bananas through the window, then peels and eats one as the bus drives away and tosses the peel onto the road."></canvas>
+  <footer><span>A little road. A long way to go.</span><div class="controls"><label>Speed <input id="speed" aria-label="Driving speed" type="range" min="0.25" max="2.5" step="0.25" value="1"></label><button id="pause" type="button">Pause</button></div></footer>
+</main>
+<script>
+// Endless bus ride — maintained here as the website animation source.
+const canvas = document.querySelector('canvas'), ctx = canvas.getContext('2d');
+const pause = document.querySelector('#pause'), speed = document.querySelector('#speed');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let running = !reducedMotion.matches, distance = 0, last = 0;
+let bumpWorld = 900, phase = 'driving', stopTime = 0, approach = 0, clock = 0;
+let velocity = 80, bananasBought = false, snackTime = 0;
+let peelThrown = false, roadPeels = [];
+const status = document.querySelector('.label');
+const ease = t => t*t*(3-2*t);
+function update(dt) {
+  clock += dt;
+  if (bananasBought && (phase === 'leaving' || phase === 'driving')) snackTime = Math.min(9, snackTime+dt);
+  updatePeels(dt);
+  if (bananasBought && snackTime>=8.1 && !peelThrown) {
+    peelThrown=true;
+    roadPeels.push({x:distance+345,y:busY()+19,vx:velocity*.35-35,vy:-65,angle:0,landed:false});
+  }
+  const bumpX = bumpWorld-distance;
+  if (phase === 'stopped') {
+    stopTime += dt;
+    if (stopTime >= 2.9) bananasBought = true;
+    approach = ease(Math.min(stopTime/1.3,1));
+    if (stopTime >= 4.5) { phase='clearing'; stopTime=0; }
+    return;
+  }
+  if (phase === 'clearing') {
+    stopTime += dt;
+    approach = 1-ease(Math.min(stopTime/1.2,1));
+    if (stopTime >= 1.2) { phase='leaving'; approach=0; }
+    return;
+  }
+  const cruise = 80*Number(speed.value);
+  const target = phase === 'driving' ? cruise*Math.max(.16,Math.min(1,(bumpX-430)/150))
+    : cruise*(bumpX>250 ? .4 : 1);
+  velocity += (target-velocity)*Math.min(1,dt*2);
+  let step=velocity*dt;
+  if (phase === 'driving' && bumpX-step <= 430) {
+    step=Math.max(0,bumpX-430); phase='stopped'; stopTime=0; velocity=0; bananasBought=false; snackTime=0; peelThrown=false;
+  }
+  distance += step;
+  if (bumpWorld-distance < -180) { bumpWorld += 1450; phase='driving'; }
+}
+const ink = '#42483f', paper = '#f7f6f2';
+function rect(x,y,w,h,color=ink) { ctx.fillStyle=color; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+function cloud(x,y) {
+  rect(x+10,y,27,2,'#b8bdb0'); rect(x+5,y+2,2,8,'#b8bdb0');
+  rect(x+37,y+2,2,8,'#b8bdb0'); rect(x,y+10,50,2,'#b8bdb0');
+}
+function wheel(x,y) {
+  rect(x-8,y-9,16,18); rect(x-10,y-6,20,12);
+  rect(x-5,y-5,10,10,paper); rect(x-2,y-2,4,4);
+  const a = distance/9;
+  rect(x+Math.cos(a)*5-1,y+Math.sin(a)*5-1,2,2);
+  rect(x-Math.cos(a)*5-1,y-Math.sin(a)*5-1,2,2);
+}
+function busY() {
+  const bumpX=bumpWorld-distance;
+  const lift = wheelX => Math.max(0,1-Math.abs(bumpX-wheelX)/22)*5;
+  return 151+Math.round(Math.sin(distance/9)*0.7-(lift(280)+lift(380))*.65);
+}
+function bus() {
+  const x=250, y=busY();
+  rect(x-4,218,165,3,'#d4d7ca');
+  rect(x+4,y,139,4); rect(x,y+4,150,53); rect(x+150,y+15,6,42);
+  rect(x+4,y+7,142,43,'#c4cdb6');
+  // Windows, passengers, and a driver facing the direction of travel.
+  for(let i=0;i<5;i++) {
+    const wx=x+9+i*23;
+    rect(wx,y+11,19,22); rect(wx+2,y+2+11,15,16,paper);
+    rect(wx+7,y+20,5,5,'#8d9680'); rect(wx+5,y+25,9,6,'#8d9680');
+  }
+  rect(x+126,y+11,19,22); rect(x+129,y+13,16,16,paper);
+  rect(x+131,y+20,5,5,'#8d9680'); rect(x+129,y+25,8,6,'#8d9680');
+  rect(x+139,y+27,6,2); rect(x+148,y+21,11,3); rect(x+157,y+21,2,8);
+  rect(x+4,y+37,142,3); rect(x+8,y+43,65,2,'#89937b');
+  rect(x+116,y+35,2,18); rect(x+125,y+35,2,18); rect(x+119,y+40,3,2);
+  rect(x-2,y+46,5,5,'#8d9680'); rect(x+148,y+44,8,5,paper);
+  rect(x-3,y+53,162,4); wheel(x+30,y+57); wheel(x+130,y+57);
+}
+function bench(x,y) {
+  rect(x,y,48,3,'#89937b'); rect(x,y+5,48,3,'#89937b');
+  rect(x-2,y+12,52,4); rect(x+4,y+16,3,8); rect(x+41,y+16,3,8);
+  // Two seated people, leaning back with their legs out.
+  for (let i=0;i<2;i++) {
+    const px=x+10+i*24;
+    rect(px,y-10,7,7); rect(px-1,y-3,9,15,i?'#9caa8e':'#b5a17e');
+    rect(px-3,y+1,3,10); rect(px,y+12,12,4);
+    rect(px+9,y+15,3,8); rect(px+9,y+21,7,3);
+  }
+}
+function stopScenery() {
+  const x=bumpWorld-distance;
+  if(x < -170 || x>850) return;
+  bench(x-15,163); bench(x+65,163);
+  rect(x+130,152,3,42,'#89937b');
+  rect(x+115,133,33,20,ink); rect(x+117,135,29,16,paper);
+  rect(x+121,144,21,3); rect(x+125,141,13,3);
+  // A striped raised strip across both lanes.
+  rect(x-10,198,20,59,'#a89d75'); rect(x-6,196,12,61,'#d7c68b');
+  for(let y=199;y<255;y+=12) rect(x-6,y,12,5,ink);
+}
+function hawker(x,y,index) {
+  const moving = approach>0 && approach<1;
+  const stride = moving?Math.sin(clock*13+index)*3:0;
+  const raised = approach>.15;
+  const trading = index===0 && phase==='stopped' && stopTime>=1.3;
+  const wave = raised && !trading ? Math.round(Math.sin(clock*5+index)*2):0;
+  rect(x-5,y-28,10,9); rect(x-6,y-31,12,3,index?'#a89d75':'#89937b');
+  rect(x-6,y-18,12,16,index?'#b5a17e':'#8e9d83');
+  rect(x-5,y-2,4,11+stride); rect(x+2,y-2,4,11-stride);
+  rect(x-7,y+8+stride,6,3); rect(x+2,y+8-stride,7,3);
+  if(raised) {
+    rect(x-10,y-22,4,12); rect(x-13,y-31+wave,4,12-wave);
+    rect(x+7,y-23,4,13); rect(x+10,y-33-wave,4,13+wave);
+  } else {
+    rect(x-10,y-16,4,14); rect(x+7,y-16,4,14);
+  }
+  const goodsY=raised?y-36-wave:y-3;
+  if(index===0) {
+    if (!bananasBought) bananas(x+9,goodsY-4);
+  } else {
+    rect(x+5,goodsY,17,4,'#887a59');
+    for(let i=0;i<3;i++) {
+      rect(x+7+i*5,goodsY-8,3,8,i===1?'#bd9c67':'#9baf9c');
+      rect(x+8+i*5,goodsY-10,1,2);
+    }
+  }
+}
+function bananas(x,y) {
+  for(let i=0;i<3;i++) {
+    rect(x+i*4,y+i,3,6,'#b89b39');
+    rect(x+1+i*4,y+6+i,5,3,'#d3b64e');
+  }
+}
+function drawPeel(x,y,angle,landed) {
+  // Three floppy pixel-art strips, rotating together while airborne.
+  const points=landed
+    ? [[0,0],[-3,1],[-6,3],[-9,3],[3,1],[6,3],[9,3],[0,3],[1,6]]
+    : [[0,-3],[0,0],[-3,2],[-5,5],[-5,8],[3,2],[5,5],[5,8],[0,4],[1,7]];
+  const c=Math.cos(angle),s=Math.sin(angle);
+  for(const [px,py] of points) rect(x+px*c-py*s,y+px*s+py*c,3,3,py>4?'#b89b39':'#d3b64e');
+}
+function updatePeels(dt) {
+  for(const peel of roadPeels) {
+    if(peel.landed) continue;
+    peel.x+=peel.vx*dt;
+    peel.vy+=220*dt;
+    peel.y+=peel.vy*dt;
+    peel.angle+=dt*5;
+    if(peel.y>=246) {
+      peel.y=246; peel.landed=true; peel.angle=0;
+
+    }
+  }
+  roadPeels=roadPeels.filter(peel=>peel.x-distance>-30);
+}
+function fallenPeels(landed) {
+  for(const peel of roadPeels) {
+    if(peel.landed!==landed) continue;
+    const x=peel.x-distance;
+    if(landed) rect(x-9,252,22,2,'#c9cdbf');
+    drawPeel(x,peel.y,peel.angle,landed);
+  }
+}
+function passengerSnack() {
+  const y=busY(), t=snackTime;
+  if(t<.4) { bananas(355,y+20); return; }
+  // Clear all remaining yellow fruit pixels once the peel leaves the hand.
+  if(!peelThrown) {
+    rect(355,y+28,5,2,'#d3b64e'); rect(357,y+29,5,2,'#b89b39');
+  }
+  if(t>=7.4) {
+    if(t<8.7) {
+      const reach=t<8.1 ? ease((t-7.4)/.7) : 1-ease(Math.min(1,(t-8.1)/.6));
+      const hx=367-22*reach, hy=y+28-9*reach;
+      // Swing the hand backward out of the window, then bring the empty arm in.
+      for(let i=0;i<=16;i++) rect(361+(hx-361)*i/16,y+27+(hy-y-27)*i/16,3,3,'#8d9680');
+      rect(hx-1,hy-1,4,4,'#a89978');
+      if(!peelThrown) drawPeel(hx,hy,0,false);
+    }
+    return;
+  }
+  const peeling=t<2.6;
+  const peel=ease(Math.min(1,Math.max(0,(t-.4)/2.2)));
+  // Three slow hand-to-mouth motions; the fruit gets shorter after each bite.
+  const eating=Math.max(0,t-2.6);
+  const cycle=Math.min(2,Math.floor(eating/1.6));
+  const beat=(eating%1.6)/1.6;
+  const lift=peeling || t>=7.4 ? 0 : Math.pow(Math.sin(Math.PI*beat),2);
+  const bites=peeling ? 0 : t>=7.4 ? 3 : Math.min(3,cycle+(beat>.5?1:0));
+  const lowering=t>7.4 ? ease(Math.min(1,(t-7.4)/.8))*6 : 0;
+  const bx=367-Math.round(lift*3), by=y+28-Math.round(lift*3)+lowering;
+  // The passenger's forearm holds the banana beside their face.
+  rect(362,y+27,3,3,'#8d9680');
+  rect(364,Math.min(y+27,by),3,Math.abs(by-(y+27))+3,'#8d9680');
+  rect(bx-1,by-2,3,3,'#a89978');
+  const fruitHeight=8-bites*2;
+  rect(bx,by-fruitHeight,3,fruitHeight,peel>.15?'#f0d990':'#d3b64e');
+  rect(bx+1,by-fruitHeight-1,2,2,'#f0d990');
+  // Two yellow peel flaps fold down, with the free hand pulling one away.
+  if(peel>0) {
+    const length=Math.round(peel*6);
+    rect(bx-2,by-3,2,length,'#d3b64e');
+    rect(bx+3,by-3,2,Math.max(0,length-1),'#b89b39');
+    rect(bx-3,by-3+length,2,2,'#b89b39');
+    if(peeling) {
+      rect(bx-5,by-4+length,3,3,'#a89978');
+      rect(360,by-2+length,4,2,'#8d9680');
+    }
+  }
+  // A tiny mouth opens at each bite, then closes while chewing.
+  if(!peeling && t<7.4) rect(363,y+23,2,beat>.35 && beat<.65?2:1,ink);
+}
+function purchase() {
+  const shoulder={x:361,y:busY()+27};
+  const t=stopTime;
+  const active=phase==='stopped' && t>=1.4;
+  if (!active) {
+    if (bananasBought) passengerSnack();
+    return;
+  }
+  // Reach from the last passenger window down to the seller's raised hand.
+  const reach=t<2.1 ? ease(Math.min(1,(t-1.4)/.7))
+    : t<3.2 ? 1 : 1-ease(Math.min(1,(t-3.2)/1.1));
+  const hand={x:shoulder.x+6*reach,y:shoulder.y+20*reach};
+  const elbow={x:shoulder.x-3*reach,y:shoulder.y+11*reach};
+  function arm(a,b) {
+    const steps=Math.ceil(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y)));
+    for(let i=0;i<=steps;i++) {
+      const f=steps ? i/steps : 0;
+      rect(a.x+(b.x-a.x)*f-1,a.y+(b.y-a.y)*f-1,3,3,'#7e896f');
+    }
+  }
+  // Passenger leans over the sill; the arm is drawn in front of the bus body.
+  rect(359,busY()+21,6,6,'#8d9680');
+  arm(shoulder,elbow); arm(elbow,hand); rect(hand.x-2,hand.y-2,4,4,'#a89978');
+  if(t<2.45) {
+    // A small green banknote travels out with the hand.
+    rect(hand.x-6,hand.y-5,9,5,'#75895c'); rect(hand.x-3,hand.y-4,2,3,'#d7dfc8');
+  } else if(t<2.9) {
+    const f=ease((t-2.45)/.45);
+    rect(hand.x-6-10*f,hand.y-5+12*f,9,5,'#75895c');
+  }
+  if(bananasBought) bananas(hand.x-3,hand.y-7);
+}
+function hawkers() {
+  const x=bumpWorld-distance;
+  if(x < -170 || x>850) return;
+  hawker(x+42-approach*117,247-approach*15,0);
+  hawker(x+82-approach*93,247-approach*12,1);
+}
+function draw() {
+  ctx.clearRect(0,0,720,280);
+  for(let i=0;i<5;i++) cloud(((i*190-distance*0.12)%950+950)%950-80,45+(i%3)*17);
+  ctx.strokeStyle='#d1d5c8'; ctx.lineWidth=2; ctx.beginPath();
+  for(let x=0;x<=720;x+=4) {
+    const y=160-Math.round((Math.sin((x+distance*.18)/100)+Math.sin((x+distance*.18)/51))*10);
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  } ctx.stroke();
+  rect(0,194,720,2,'#a8b09b'); rect(0,196,720,64,'#eaede3');
+  rect(0,259,720,2,'#a8b09b');
+  for(let i=0;i<11;i++) {
+    let x=((i*80-distance)%880+880)%880-80;
+    rect(x,235,36,3,'#a8b09b');
+  }
+  for(let i=0;i<5;i++) {
+    let x=((i*200-distance)%1000+1000)%1000-100;
+    rect(x,179,3,16,'#89937b'); rect(x-1,178,5,5,ink);
+    rect(x+55,188,12,2,'#a8b09b'); rect(x+58,185,2,4,'#a8b09b');
+    rect(x+40,269,16,2,'#c0c7b5');
+  }
+  stopScenery();
+  fallenPeels(true);
+  bus();
+  hawkers();
+  purchase();
+  fallenPeels(false);
+  status.textContent = phase==='driving' && bumpWorld-distance<620 ? 'SPEED BUMP AHEAD' : 'NOWHERE TO BE.';
+}
+function syncButton() { pause.textContent=running?'Pause':'Resume'; pause.setAttribute('aria-label',running?'Pause animation':'Resume animation'); }
+pause.addEventListener('click',()=>{running=!running;syncButton();});
+reducedMotion.addEventListener('change',e=>{running=!e.matches;syncButton();});
+function frame(now) {
+  const dt=last?Math.min((now-last)/1000,.05):0; last=now;
+  if(running) update(dt);
+  draw(); requestAnimationFrame(frame);
+}
+syncButton(); requestAnimationFrame(frame);
+</script>
+</html>

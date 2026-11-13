@@ -1,5 +1,13 @@
 [
   {
+    "title": "Endless Bus Ride",
+    "description": "A little road, a passenger bus, and nowhere to be. A playful pixel-art animation with roadside stops and a snack for the journey.",
+    "url": "./endless-bus-ride/",
+    "openInPopup": false,
+    "tags": ["Fun", "Animation", "Experiment"],
+    "pricing": "free"
+  },
+  {
     "title": "Copy Selected Tabs URLs",
     "description": "Copy URLs from selected Chrome tabs in one click for easy sharing and quick organization.",
     "url": "https://chromewebstore.google.com/detail/copy-selected-tabs-urls/eoibojgifhgghnidcpapddnfbpgbdnkd",
