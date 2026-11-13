@@ -15,19 +15,17 @@
   .controls { display: flex; align-items: center; gap: 14px; }
   button { font: inherit; color: #383c37; border: 1px solid #c7c9bf; border-radius: 4px; padding: 9px 14px; background: transparent; cursor: pointer; min-width: 82px; }
   button:hover { background: #eaece3; }
-  input { width: 90px; accent-color: #545e4b; }
-  label { display: flex; align-items: center; gap: 10px; }
   @media (max-width: 500px) { main { padding: 20px; } .label { letter-spacing: 1px; } }
 </style>
 <main>
   <header><h1>Endless bus ride</h1><span class="label">NOWHERE TO BE.</span></header>
   <canvas width="720" height="280" role="img" aria-label="A pixel-art passenger bus driving along an endless road, with occasional speed bumps, roadside benches and hawkers offering bananas and goods during short stops, where a passenger pays for bananas through the window, then peels and eats one as the bus drives away and tosses the peel onto the road."></canvas>
-  <footer><span>A little road. A long way to go.</span><div class="controls"><label>Speed <input id="speed" aria-label="Driving speed" type="range" min="0.25" max="2.5" step="0.25" value="1"></label><button id="pause" type="button">Pause</button></div></footer>
+  <footer><span>A little road. A long way to go.</span><div class="controls"><button id="pause" type="button">Pause</button></div></footer>
 </main>
 <script>
 // Endless bus ride — maintained here as the website animation source.
 const canvas = document.querySelector('canvas'), ctx = canvas.getContext('2d');
-const pause = document.querySelector('#pause'), speed = document.querySelector('#speed');
+const pause = document.querySelector('#pause');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let running = !reducedMotion.matches, distance = 0, last = 0;
 let bumpWorld = 900, phase = 'driving', stopTime = 0, approach = 0, clock = 0;
@@ -57,7 +55,7 @@ function update(dt) {
     if (stopTime >= 1.2) { phase='leaving'; approach=0; }
     return;
   }
-  const cruise = 80*Number(speed.value);
+  const cruise = 80;
   const target = phase === 'driving' ? cruise*Math.max(.16,Math.min(1,(bumpX-430)/150))
     : cruise*(bumpX>250 ? .4 : 1);
   velocity += (target-velocity)*Math.min(1,dt*2);
